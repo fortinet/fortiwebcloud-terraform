@@ -32,7 +32,7 @@ If you're building the provider, follow the instructions to [install it as a plu
 $ terraform init
 ```
 ## License
-[MIT](https://github.com/fortinet/terraform-secure-remote-access/blob/master/LICENSE)
+[MIT](https://github.com/fortinet/fortiwebcloud-terraform/blob/master/LICENSE)
 
 ## Support
 
