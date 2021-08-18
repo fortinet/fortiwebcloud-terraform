@@ -76,8 +76,11 @@ func (cc *AppCreateClient) ReadData() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	var mbody []interface{}
+	var mbody map[string]interface{}
 	err = json.Unmarshal(body.([]byte), &mbody)
+	if err == nil {
+		return mbody["domain_info"], err
+	}
 
 	return mbody, err
 }

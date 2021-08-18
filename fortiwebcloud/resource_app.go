@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -302,6 +303,10 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 
 		d.SetId(appName)
 		d.Set("cname", string(locJSON))
+
+		/* Sleep for 10 seconds after creating the application
+		   to prevent dependent resources from being executed when the application is not ready on the server side */
+		time.Sleep( 10 * time.Second )
 		return resourceFwbCloudAppRead(d, m)
 	} else {
 		return nil

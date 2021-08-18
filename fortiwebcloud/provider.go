@@ -37,7 +37,8 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"fortiwebcloud_app": resourceApp(),
+			"fortiwebcloud_app":                resourceApp(),
+			"fortiwebcloud_openapi_validation": resourceOpenApiValidation(),
 		},
 
 		ConfigureFunc: providerConfigure,

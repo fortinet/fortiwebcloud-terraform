@@ -2,11 +2,15 @@ package fortiwebcloud
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"time"
@@ -22,6 +26,69 @@ type Request struct {
 	Data         *bytes.Buffer
 }
 
+type UploadFiles struct {
+	FileName string
+	FilePath string
+}
+
+func NewRequestWithFiles(c *CloudWafClient, method string, path string, params interface{}, data *bytes.Buffer, mfiles []UploadFiles) (*Request, error) {
+	var h *http.Request
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	dd := []byte(data.String())
+	var mdata map[string]interface{}
+	tojson := json.Unmarshal(dd, &mdata)
+	if tojson != nil {
+		output(fmt.Sprintf("Error: %s\n", tojson))
+	}
+	for key, val := range mdata {
+		switch val.(type) {
+		case map[string]interface{}:
+			jsonString, _ := json.Marshal(val)
+			_ = writer.WriteField(key, fmt.Sprintf("%s", jsonString))
+			break
+		default:
+			_ = writer.WriteField(key, fmt.Sprintf("%v", val))
+			break
+		}
+	}
+
+	var i int = 0
+	for _, mfile := range mfiles {
+		i++
+		file, err := os.Open(mfile.FilePath)
+		defer file.Close()
+		if err != nil {
+			output(fmt.Sprintf("Error open file %s: %v", mfile.FilePath, err))
+			return nil, err
+		}
+		part, err := writer.CreateFormFile(mfile.FileName, mfile.FilePath)
+		if err != nil {
+			output(fmt.Sprintf("Error reading file: %v", err))
+		}
+		_, err = io.Copy(part, file)
+	}
+	if err := writer.Close(); err != nil {
+		output(fmt.Sprintf("Error closing multipart writer: %v", err))
+	}
+	if data == nil {
+		h, _ = http.NewRequest(method, "", nil)
+	} else {
+		h, _ = http.NewRequest(method, "", body)
+		output("send body data>>>:" + body.String())
+	}
+	h.Header.Set("Content-Type", writer.FormDataContentType())
+
+	r := &Request{
+		Client:      c,
+		Path:        path,
+		HTTPRequest: h,
+		Params:      params,
+		Data:        data,
+	}
+	return r, nil
+}
+
 // New creates request object with http method, path, params and data,
 // It will save the http request, path, etc. for the next operations
 // such as sending data, getting response, etc.
@@ -35,6 +102,7 @@ func NewRequest(c *CloudWafClient, method string, path string, params interface{
 		h, _ = http.NewRequest(method, "", data)
 		output("send body data>>:" + data.String())
 	}
+	h.Header.Set("Content-Type", "application/json")
 
 	r := &Request{
 		Client:      c,
@@ -57,8 +125,6 @@ func (r *Request) FillUrlParams(key string, val string) {
 
 func (r *Request) Send() error {
 
-	r.HTTPRequest.Header.Set("Content-Type", "application/json")
-
 	r.HTTPRequest.Header.Set("Authorization", r.Client.Token)
 
 	u := buildURL(r)
@@ -67,7 +133,7 @@ func (r *Request) Send() error {
 	r.HTTPRequest.URL, err = url.Parse(u)
 	output("send data to url>>:" + r.HTTPRequest.URL.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return err
 	}
 

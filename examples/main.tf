@@ -1,17 +1,39 @@
+terraform {
+  required_providers {
+    fortiwebcloud = {
+      source  = "fortinet/terraform/fortiwebcloud"
+      version = "1.0.1"
+    }
+  }
+}
 
 provider "fortiwebcloud" {
-  hostname     = "api.fortiweb-cloud.com"
+  hostname  = "api.fortiweb-cloud.com"
   api_token = "specify your token"
 }
 
 resource "fortiwebcloud_app" "app_example" {
-  app_name = "from_terraform"
+  app_name    = "from_terraform"
   domain_name = "www.example.com"
   app_service = {
-      http= 80
-      https= 443
+    http  = 80
+    https = 443
   }
-  origin_server_ip = "your server ip"
+  origin_server_ip      = "your server ip"
   origin_server_service = "HTTPS"
-  cdn = false
+  cdn                   = false
+}
+
+
+resource "fortiwebcloud_openapi_validation" "openapi_validation_example" {
+  app_name = "from_terraform"
+  enable   = true
+  action   = "alert_deny"
+  validation_files = [
+    "/path/openapi_validation_file.yaml",
+    "/path/openapi_validation_file2.yaml"
+  ]
+  depends_on = [
+    fortiwebcloud_app.app_example
+  ]
 }
