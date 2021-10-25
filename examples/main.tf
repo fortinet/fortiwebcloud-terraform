@@ -2,7 +2,7 @@ terraform {
   required_providers {
     fortiwebcloud = {
       source  = "fortinet/terraform/fortiwebcloud"
-      version = "1.0.1"
+      version = "1.0.2"
     }
   }
 }
@@ -22,6 +22,7 @@ resource "fortiwebcloud_app" "app_example" {
   origin_server_ip      = "your server ip"
   origin_server_service = "HTTPS"
   cdn                   = false
+  continent_cdn         = false
 }
 
 

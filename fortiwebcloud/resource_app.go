@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"strings"
-	"time"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -79,6 +78,16 @@ func resourceApp() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+			"continent_cdn": &schema.Schema{
+				Type:	  schema.TypeBool,
+				Optional: true,
+				Default: false,
+			},
+			"continent": &schema.Schema{
+				Type:	  schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 			"block": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -131,6 +140,7 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 	service := d.Get("origin_server_service").(string)
 	service = strings.ToUpper(service)
 	cdn := d.Get("cdn").(bool)
+	continent_cdn := d.Get("continent_cdn").(bool)
 	block := d.Get("block").(bool)
 	template := d.Get("template").(string)
 
@@ -245,6 +255,7 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 	var i int = 0
 	var blockMode = BoolToInt(block)
 	var cdnStatus = BoolToInt(cdn)
+	var is_globa_cdn = BoolToInt(!continent_cdn)
 
 	if _, ok := appService["http"]; ok {
 		apiService[i] = "http"
@@ -264,6 +275,7 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 			Availability:   testStatus["head_availability"].(float64),
 			StatusCode:     testStatus["head_status_code"].(float64),
 			CDNStatus:      cdnStatus,
+			IsGlobaCdn:     is_globa_cdn,
 			TemplateEnable: templateEnable,
 			TemplateId:     templateId,
 			ServerType:     strings.ToLower(service), // origin_server_service
@@ -274,6 +286,9 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 			cluster := region["cluster"].(map[string]interface{})
 			appCreate.Region = cluster["single"].(string)
 		}
+		cluster := region["cluster"].(map[string]interface{})
+		appCreate.Continent = cluster["continent"].(string)
+		log.Printf("Continent CDN: %s", appCreate.Continent)
 		platformList := region["region"].([]interface{})
 		if len(platformList) > 0 {
 			appCreate.Platform = platformList[0].(string)
@@ -303,15 +318,22 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 
 		d.SetId(appName)
 		d.Set("cname", string(locJSON))
+		d.Set("continent", appCreate.Continent)
 
-		/* Sleep for 10 seconds after creating the application
-		   to prevent dependent resources from being executed when the application is not ready on the server side */
-		time.Sleep( 10 * time.Second )
-		return resourceFwbCloudAppRead(d, m)
+		ret:= resourceFwbCloudAppRead(d, m)
+		if ret != nil {
+			return ret
+		}
+		appCreateChk := &AppCreateChk{EPId: d.Get("ep_id").(string)}
+		appChkStatus := NewAppCreateChkClient(c, appCreateChk)
+		if appChkStatus.ChkStatus() {
+			return nil
+		} else {
+			return fmt.Errorf( appName + " did not initialize successfully!")
+		}
 	} else {
-		return nil
+		return  fmt.Errorf(appName + " exists")
 	}
-
 }
 
 func resourceFwbCloudAppUpdate(d *schema.ResourceData, m interface{}) error {
