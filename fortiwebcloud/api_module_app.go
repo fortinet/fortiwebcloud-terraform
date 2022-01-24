@@ -108,7 +108,7 @@ func NewAppCreateChkClient(c *CloudWafClient, d interface{}) *AppCreateChkClient
 }
 
 func (qc *AppCreateChkClient) ChkStatus()  bool {
-	for i := 0; i < 10; i++ {  //Maximum 10 retries
+	for i := 0; i < 40; i++ {  //Maximum 40 retries
         if i > 0 {
 			output("Retry to wait for the app to initialize:  "+ fmt.Sprint(i))
             time.Sleep(time.Second)
