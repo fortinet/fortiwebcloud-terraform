@@ -11,6 +11,7 @@ type OpenapiValidationCreate struct {
 	Status                 string     `json:"_status"`
 	OpenapiValidationFiles SchemaFile `json:"OpenAPIValidationPolicy"`
 	Action                 string     `json:"action"`
+	Template_status        string     `json:"template_status"`
 }
 
 type SchemaFile struct {
@@ -46,8 +47,8 @@ func NewOpenapiValidationCreateClient(c *CloudWafClient, d interface{}, uploadFi
 	}
 
 	bytes := bytes.NewBuffer(locJSON)
-	request, err := NewRequestWithFiles(c, "PUT", "application/"+data.EPId+"/apiprotection", nil, bytes, uploadFiles)
-	output("URL >>: " + "application/" + data.EPId + "/apiprotection")
+	request, err := NewRequestWithFiles(c, "PUT", "application/"+data.EPId+"/APIProtection", nil, bytes, uploadFiles)
+	output("URL >>: " + "application/" + data.EPId + "/APIProtection")
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -76,8 +77,7 @@ func NewOpenapiValidationQueryClient(c *CloudWafClient, d interface{}) *OpenapiV
 	var openapiValidationQueryClient OpenapiValidationQueryClient
 
 	data := d.(*OpenapiValidationQuery)
-
-	request := NewRequest(c, "GET", "application/"+data.EPId+"/apiprotection", nil, nil)
+	request := NewRequest(c, "GET", "application/"+data.EPId+"/APIProtection", nil, nil)
 
 	openapiValidationQueryClient.d = data
 	openapiValidationQueryClient.r = request

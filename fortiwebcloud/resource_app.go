@@ -255,7 +255,7 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 	var i int = 0
 	var blockMode = BoolToInt(block)
 	var cdnStatus = BoolToInt(cdn)
-	var is_globa_cdn = BoolToInt(!continent_cdn)
+	var is_globa_cdn = BoolToInt(cdn && !continent_cdn)
 
 	if _, ok := appService["http"]; ok {
 		apiService[i] = "http"
@@ -286,9 +286,13 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 			cluster := region["cluster"].(map[string]interface{})
 			appCreate.Region = cluster["single"].(string)
 		}
-		cluster := region["cluster"].(map[string]interface{})
-		appCreate.Continent = cluster["continent"].(string)
-		log.Printf("Continent CDN: %s", appCreate.Continent)
+		if cdn && is_globa_cdn == 0 {
+            cluster := region["cluster"].(map[string]interface{})
+            appCreate.Continent = cluster["continent"].(string)
+            log.Printf("Continent CDN: %s", appCreate.Continent)
+		} else {
+		    appCreate.Continent = ""
+		}
 		platformList := region["region"].([]interface{})
 		if len(platformList) > 0 {
 			appCreate.Platform = platformList[0].(string)
@@ -324,13 +328,7 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 		if ret != nil {
 			return ret
 		}
-		appCreateChk := &AppCreateChk{EPId: d.Get("ep_id").(string)}
-		appChkStatus := NewAppCreateChkClient(c, appCreateChk)
-		if appChkStatus.ChkStatus() {
-			return nil
-		} else {
-			return fmt.Errorf( appName + " did not initialize successfully!")
-		}
+		return nil
 	} else {
 		return  fmt.Errorf(appName + " exists")
 	}

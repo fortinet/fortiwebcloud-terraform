@@ -160,11 +160,14 @@ func resourceFwbCloudOpenApiValidationUpdate(d *schema.ResourceData, m interface
 
 	openapiValidationFiles := SchemaFile{ofiles}
 
+	var template_disable string = "disable"
+
 	OpenapiValidationCreate := &OpenapiValidationCreate{
 		EPId:                   ep_id,
 		Status:                 status,
 		OpenapiValidationFiles: openapiValidationFiles,
 		Action:                 action,
+		Template_status: template_disable,
 	}
 
 	openapiValidation, err := NewOpenapiValidationCreateClient(c, OpenapiValidationCreate, uploadFiles)
@@ -210,6 +213,8 @@ func resourceFwbCloudOpenApiValidationDelete(d *schema.ResourceData, m interface
 
 	var action string = "alert"
 
+	var template_disable string = "disable"
+	
 	openapiValidationFiles := SchemaFile{[]OFiles{}}
 
 	OpenapiValidationCreate := &OpenapiValidationCreate{
@@ -217,6 +222,7 @@ func resourceFwbCloudOpenApiValidationDelete(d *schema.ResourceData, m interface
 		Status:                 status,
 		OpenapiValidationFiles: openapiValidationFiles,
 		Action:                 action,
+		Template_status: template_disable,
 	}
 
 	openapiValidation, err := NewOpenapiValidationCreateClient(c, OpenapiValidationCreate, nil)

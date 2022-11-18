@@ -1,8 +1,6 @@
 package fortiwebcloud
 
 import (
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/json"
 	"log"
@@ -93,42 +91,6 @@ func (cc *AppCreateClient) ReadData() (interface{}, error) {
 	}
 
 	return mbody, err
-}
-
-func NewAppCreateChkClient(c *CloudWafClient, d interface{}) *AppCreateChkClient {
-	var app AppCreateChkClient
-
-	data := d.(*AppCreateChk)
-	output("the ep id is >>:" + data.EPId)
-	request := NewRequest(c, "GET", "application/"+data.EPId, nil, nil)
-
-	app.d = data
-	app.r = request
-	return &app
-}
-
-func (qc *AppCreateChkClient) ChkStatus()  bool {
-	for i := 0; i < 40; i++ {  //Maximum 40 retries
-        if i > 0 {
-			output("Retry to wait for the app to initialize:  "+ fmt.Sprint(i))
-            time.Sleep(time.Second)
-        }
-		qc.r.Send()
-		body, err := qc.r.ReadData()
-		if err != nil {
-			return false
-		}
-
-		var mbody interface{}
-		err = json.Unmarshal(body.([]byte), &mbody)
-
-		eMap := mbody.(map[string]interface{})
-		output("elem app_name:" + eMap["app_name"].(string)  + "create_finished:" + fmt.Sprint(eMap["create_finished"]))
-		if eMap["create_finished"].(float64) == 1 {
-			return true
-		}
-    }
-	return false
 }
 
 func NewAppQueryClient(c *CloudWafClient, d interface{}) *AppQueryClient {
