@@ -227,10 +227,11 @@ func resourceFwbCloudAppCreate(d *schema.ResourceData, m interface{}) error {
 		stestClient := NewServerTestClient(c, &serverTest)
 		stestClient.Send()
 		testRead, err := stestClient.ReadData()
-		testStatus = testRead.(map[string]interface{})
 		if err != nil {
 			return fmt.Errorf("FortiWebCloud test server failed!" + err.Error())
 		}
+
+		testStatus = testRead.(map[string]interface{})
 
 		ipregion := &IPRegion{Domain: domain, EpIP: serverAddr, ExtraDomain: extra, CustomPort: custom}
 

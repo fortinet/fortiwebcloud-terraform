@@ -82,7 +82,8 @@ func resourceFwbCloudOpenApiValidationRead(d *schema.ResourceData, m interface{}
 	res := qOpenapiValidation.(map[string]interface{})
 	var action string = ""
 	result := res["result"].(map[string]interface{})
-	_action := result["action"].(string)
+	configs := result["configs"].(map[string]interface{})
+	_action := configs["action"].(string)
 	action_list := [3]string{"alert", "alert_deny", "deny_no_log"}
 
 	for _, x := range action_list {
@@ -139,9 +140,9 @@ func resourceFwbCloudOpenApiValidationUpdate(d *schema.ResourceData, m interface
 	//Get Params from d
 	ep_id := app["ep_id"].(string)
 
-	var status string = "enable"
+	var status bool = true
 	if d.Get("enable").(bool) == false {
-		status = "disable"
+		status = false
 	}
 
 	validation_files := d.Get("validation_files").([]interface{})
@@ -158,16 +159,18 @@ func resourceFwbCloudOpenApiValidationUpdate(d *schema.ResourceData, m interface
 		}
 	}
 
-	openapiValidationFiles := SchemaFile{ofiles}
+	openapiValidationCfg := SchemaFile{
+		Status:                 status,
+		Action:                 action,
+		SchemaFiles:            ofiles,
+	}
 
-	var template_disable string = "disable"
+	var template_disable bool = false
 
 	OpenapiValidationCreate := &OpenapiValidationCreate{
 		EPId:                   ep_id,
-		Status:                 status,
-		OpenapiValidationFiles: openapiValidationFiles,
-		Action:                 action,
-		Template_status: template_disable,
+		Template_status:        template_disable,
+		OpenapiValidationCfg:   openapiValidationCfg,
 	}
 
 	openapiValidation, err := NewOpenapiValidationCreateClient(c, OpenapiValidationCreate, uploadFiles)
@@ -209,20 +212,22 @@ func resourceFwbCloudOpenApiValidationDelete(d *schema.ResourceData, m interface
 	//Get Params from d
 	ep_id := app["ep_id"].(string)
 
-	var status string = "disable"
+	var status bool = false
 
 	var action string = "alert"
 
-	var template_disable string = "disable"
+	var template_disable bool = false
 	
-	openapiValidationFiles := SchemaFile{[]OFiles{}}
+	openapiValidationCfg := SchemaFile{
+		Status:                 status,
+		Action:                 action,
+		SchemaFiles:            []OFiles{},
+	}
 
 	OpenapiValidationCreate := &OpenapiValidationCreate{
 		EPId:                   ep_id,
-		Status:                 status,
-		OpenapiValidationFiles: openapiValidationFiles,
-		Action:                 action,
-		Template_status: template_disable,
+		Template_status:        template_disable,
+		OpenapiValidationCfg:   openapiValidationCfg,
 	}
 
 	openapiValidation, err := NewOpenapiValidationCreateClient(c, OpenapiValidationCreate, nil)

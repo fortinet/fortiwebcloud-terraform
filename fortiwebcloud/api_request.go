@@ -189,7 +189,7 @@ func (r *Request) ReadData() (interface{}, error) {
 
 func buildURL(r *Request) string {
 	host := "https://" + r.Client.Host + "/"
-	path := path.Join("v1", r.Path)
+	path := path.Join("v2", r.Path)
 	u := host + path
 	para := ""
 	for k, _ := range r.HTTPRequest.Form {
